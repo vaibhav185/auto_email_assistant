@@ -1,41 +1,35 @@
-from langchain.llms import Ollama
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-
-# def get_reply_chain():
-#     llm = Ollama(model="gemma3:1b")
-#     prompt = PromptTemplate.from_template(
-#         "Generate a polite and professional reply to this email:\n\n{email_content}\n\nReply:"
-#     )
-#     return LLMChain(llm=llm, prompt=prompt)
-
-
-
-
-
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from putergenai import PuterClient
 from config import PUTER_TOKEN, LLM_MODEL   # store safely in config.py
+from langchain_core.prompt_values import PromptValue
 
-
-# Create a thin wrapper so LangChain can call Puter
 class PuterLLM:
-    def __init__(self, client: PuterClient, model: str, temperature: float = 0.7):
+    def __init__(self, client, model, temperature=0.7):
         self.client = client
         self.model = model
         self.temperature = temperature
 
-    def __call__(self, prompt: str) -> str:
+    def __call__(self, prompt) -> str:
+        # Convert LangChain PromptValue -> plain string
+        if isinstance(prompt, PromptValue):
+            prompt = prompt.to_string()
+        else:
+            prompt = str(prompt)
+
         resp = self.client.ai_chat(
             messages=[{"role": "user", "content": prompt}],
-            options={
-                "model": self.model,
-                "temperature": self.temperature
-            }
+            options={"model": self.model, "temperature": self.temperature}
         )
-        return resp["response"]["result"]["message"]["content"].strip()
 
+        # ✅ Safe extraction
+        try:
+            return resp["response"]["result"]["message"]["content"].strip()
+        except (KeyError, TypeError):
+            try:
+                return resp["response"]["result"].strip()
+            except Exception:
+                return str(resp).strip()
 
 # Initialize Puter client
 client = PuterClient(token=PUTER_TOKEN)
@@ -47,4 +41,7 @@ def get_reply_chain():
         "Generate a polite and professional reply to this email:\n\n{email_content}\n\nReply:"
     )
 
-    return LLMChain(llm=llm, prompt=prompt)
+    # return LLMChain(llm=llm, prompt=prompt)
+    chain = prompt | llm
+    return chain
+
