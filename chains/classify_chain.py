@@ -2,7 +2,6 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from putergenai import PuterClient
 from config import PUTER_TOKEN, LLM_MODEL
-
 from langchain_core.prompt_values import PromptValue
 
 class PuterLLM:
