@@ -9,7 +9,7 @@ PASSWORD = os.getenv("EMAIL_PASSWORD")
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 
 
-def fetch_latest_emails(limit=5):
+def fetch_latest_emails(limit=2):
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(EMAIL, PASSWORD)
     mail.select("inbox")
